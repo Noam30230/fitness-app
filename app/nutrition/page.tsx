@@ -41,6 +41,7 @@ export default function NutritionPage() {
   const [logs7d, setLogs7d] = useState<NutritionLog[]>([]);
   const [savedMeals, setSavedMeals] = useState<SavedMeal[]>([]);
   const [loading, setLoading] = useState(false);
+  const [addError, setAddError] = useState("");
 
   const today = format(new Date(), "yyyy-MM-dd");
 
@@ -108,19 +109,27 @@ export default function NutritionPage() {
   }[]) => {
     if (!activeProfile) return;
     setLoading(true);
+    setAddError("");
     try {
       const payloads = items.map((item) => ({
         ...item,
         profile_id: activeProfile.id,
         date: today,
       }));
-      await fetch("/api/nutrition", {
+      const res = await fetch("/api/nutrition", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payloads),
       });
-      await fetchData();
-      setShowSheet(false);
+      if (res.ok) {
+        await fetchData();
+        setShowSheet(false);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setAddError(err.error ?? `Erreur serveur (${res.status})`);
+      }
+    } catch {
+      setAddError("Impossible de contacter le serveur.");
     } finally {
       setLoading(false);
     }
@@ -271,6 +280,11 @@ export default function NutritionPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 pb-4">
+            {addError && (
+              <div className="bg-red-400/10 border border-red-400/30 rounded-xl px-4 py-3 mb-4">
+                <p className="text-red-400 text-sm text-center">{addError}</p>
+              </div>
+            )}
             {/* Mode tabs */}
             <div className="flex gap-2 mb-5">
               {([
