@@ -27,19 +27,21 @@ export default function BarcodeScanner({ onResult }: BarcodeScannerProps) {
 
   useEffect(() => {
     if (mode === "camera" && typeof window !== "undefined") {
-      let scanner: { start: (elementId: string, config: object, callback: (code: string) => void) => void; stop: () => Promise<void> } | null = null;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let scanner: any = null;
 
       import("html5-qrcode").then(({ Html5Qrcode }) => {
         const qr = new Html5Qrcode("barcode-reader");
         html5QrRef.current = qr;
-        scanner = qr as typeof scanner;
+        scanner = qr;
         qr.start(
           { facingMode: "environment" },
           { fps: 10, qrbox: { width: 250, height: 250 } },
           (decodedText: string) => {
             handleBarcode(decodedText);
             qr.stop().catch(() => {});
-          }
+          },
+          undefined
         ).catch(() => {
           setMode("manual");
         });
