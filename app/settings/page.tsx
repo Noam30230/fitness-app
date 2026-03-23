@@ -133,10 +133,10 @@ export default function SettingsPage() {
         <Section title="Activité">
           <div className="grid grid-cols-2 gap-2">
             {([
-              { v: "sedentary" as ActivityLevel, l: "Sédentaire", d: "×1.2" },
-              { v: "light" as ActivityLevel, l: "Léger", d: "×1.4" },
-              { v: "moderate" as ActivityLevel, l: "Modéré", d: "×1.6" },
-              { v: "intense" as ActivityLevel, l: "Intense", d: "×1.8" },
+              { v: "sedentary" as ActivityLevel, l: "Sédentaire", d: "0-1 séance/sem." },
+              { v: "light" as ActivityLevel, l: "Léger", d: "2-3 séances/sem." },
+              { v: "moderate" as ActivityLevel, l: "Modéré", d: "4-5 séances/sem." },
+              { v: "intense" as ActivityLevel, l: "Intense", d: "6-7 séances/sem." },
             ]).map(({ v, l, d }) => (
               <button key={v} onClick={() => F("activity_level", v)}
                 className={`py-3 px-3 rounded-xl text-sm font-semibold flex flex-col items-center transition-all ${form.activity_level === v ? "bg-[#F5C400] text-black" : "bg-[#1C1C1C] text-[#888888] border border-[#2A2A2A]"}`}>

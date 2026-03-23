@@ -133,10 +133,10 @@ export default function OnboardingPage() {
           <div className="grid grid-cols-2 gap-2">
             {(
               [
-                { v: "sedentary", l: "Sédentaire", d: "×1.2" },
-                { v: "light", l: "Léger", d: "×1.4" },
-                { v: "moderate", l: "Modéré", d: "×1.6" },
-                { v: "intense", l: "Intense", d: "×1.8" },
+                { v: "sedentary", l: "Sédentaire", d: "0-1 séance/sem." },
+                { v: "light", l: "Léger", d: "2-3 séances/sem." },
+                { v: "moderate", l: "Modéré", d: "4-5 séances/sem." },
+                { v: "intense", l: "Intense", d: "6-7 séances/sem." },
               ] as { v: ActivityLevel; l: string; d: string }[]
             ).map(({ v, l, d }) => (
               <button
