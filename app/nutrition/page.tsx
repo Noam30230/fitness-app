@@ -260,7 +260,7 @@ export default function NutritionPage() {
 
       {/* Bottom Sheet */}
       {showSheet && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end">
+        <div className="fixed inset-0 z-[100] flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSheet(false)} />
           <div className="relative bg-[#141414] rounded-t-3xl border-t border-[#2A2A2A] slide-up max-h-[90vh] flex flex-col">
             <div className="p-5 pb-0 flex items-center justify-between mb-5">

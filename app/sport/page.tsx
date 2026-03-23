@@ -319,7 +319,7 @@ export default function SportPage() {
 
       {/* Bottom Sheet */}
       {showSheet && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end">
+        <div className="fixed inset-0 z-[100] flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSheet(false)} />
           <div className="relative bg-[#141414] rounded-t-3xl border-t border-[#2A2A2A] slide-up max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-5 pb-0">
@@ -420,7 +420,7 @@ export default function SportPage() {
               </div>
 
             </div>
-            <div className="p-5 pt-3 pb-8 border-t border-[#2A2A2A]">
+            <div className="p-5 pt-3 border-t border-[#2A2A2A]" style={{ paddingBottom: "max(env(safe-area-inset-bottom) + 20px, 28px)" }}>
               <button
                 onClick={handleSubmit}
                 disabled={loading}
