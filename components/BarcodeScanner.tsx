@@ -72,8 +72,7 @@ export default function BarcodeScanner({ onResult }: BarcodeScannerProps) {
 
     return () => {
       stopped = true;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const qr = scannerRef.current as any;
+      const qr = scannerRef.current as { isScanning?: boolean; stop: () => Promise<void> };
       if (qr?.isScanning) {
         qr.stop().catch(() => {});
       }
