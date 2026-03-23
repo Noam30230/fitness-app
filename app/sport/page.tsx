@@ -324,60 +324,52 @@ export default function SportPage() {
         </div>
       </div>
 
-      {/* Bottom Sheet */}
+      {/* Bottom Sheet — Quick Log */}
       {showSheet && (
         <div className="fixed inset-0 z-[100] flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSheet(false)} />
-          <div className="relative bg-[#141414] rounded-t-3xl border-t border-[#2A2A2A] slide-up max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between p-5 pb-0">
-              <h2 className="text-lg font-bold text-white">Nouvelle séance</h2>
+          <div className="relative bg-[#141414] rounded-t-3xl border-t border-[#2A2A2A] slide-up flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 pt-5 pb-3">
+              <div>
+                <h2 className="text-lg font-bold text-white">Séance du jour</h2>
+                <p className="text-xs text-[#888888]">Sélectionne et valide en 2 secondes</p>
+              </div>
               <button onClick={() => setShowSheet(false)} className="text-[#888888]">
                 <X size={22} />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-5 pt-4 flex flex-col gap-4">
-              {/* Date */}
+            <div className="px-5 pb-3 flex flex-col gap-4">
+              {/* Duration presets */}
               <div>
-                <label className="text-xs text-[#888888] mb-2 block uppercase tracking-wide">Date</label>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="w-full bg-[#1C1C1C] border border-[#2A2A2A] rounded-xl px-4 py-3 text-white focus:border-[#F5C400] outline-none"
-                />
-              </div>
-
-              {/* Duration */}
-              <div>
-                <label className="text-xs text-[#888888] mb-2 block uppercase tracking-wide">
-                  Durée : <span className="text-white">{duration} min</span>
-                </label>
-                <input
-                  type="range"
-                  min={10}
-                  max={180}
-                  step={5}
-                  value={duration}
-                  onChange={(e) => setDuration(Number(e.target.value))}
-                  className="w-full accent-[#F5C400]"
-                />
-                <div className="flex justify-between text-xs text-[#555] mt-1">
-                  <span>10 min</span><span>180 min</span>
+                <p className="text-xs text-[#888888] mb-2 uppercase tracking-wide">Durée</p>
+                <div className="flex gap-2">
+                  {[30, 45, 60, 75, 90].map((d) => (
+                    <button
+                      key={d}
+                      onClick={() => setDuration(d)}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                        duration === d ? "bg-[#F5C400] text-black" : "bg-[#1C1C1C] text-[#888888] border border-[#2A2A2A]"
+                      }`}
+                    >
+                      {d}′
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {/* Mode A: category */}
+              {/* Mode A: big category buttons */}
               {activeProfile.workout_mode === "category" && (
                 <div>
-                  <label className="text-xs text-[#888888] mb-2 block uppercase tracking-wide">Catégorie</label>
+                  <p className="text-xs text-[#888888] mb-2 uppercase tracking-wide">Type</p>
                   <div className="grid grid-cols-3 gap-2">
                     {CATEGORIES.map((c) => (
                       <button
                         key={c}
                         onClick={() => setCategory(c)}
-                        className={`py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                          category === c ? "text-black" : "text-[#888888] border border-[#2A2A2A] bg-[#1C1C1C]"
+                        className={`py-4 rounded-xl text-sm font-bold transition-all ${
+                          category === c ? "text-black scale-[1.03]" : "text-[#888888] border border-[#2A2A2A] bg-[#1C1C1C]"
                         }`}
                         style={category === c ? { backgroundColor: CATEGORY_COLORS[c] } : {}}
                       >
@@ -390,53 +382,51 @@ export default function SportPage() {
 
               {/* Mode B: exercises */}
               {activeProfile.workout_mode === "exercises" && (
-                <div>
-                  <label className="text-xs text-[#888888] mb-2 block uppercase tracking-wide">Exercices réalisés</label>
-                  <div className="flex flex-col gap-2">
-                    {activeProfile.exercise_list.map((ex) => (
-                      <label key={ex} className="flex items-center gap-3 bg-[#1C1C1C] rounded-xl px-4 py-3 border border-[#2A2A2A] cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={exercisesDone.includes(ex)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setExercisesDone([...exercisesDone, ex]);
-                            } else {
-                              setExercisesDone(exercisesDone.filter((e2) => e2 !== ex));
-                            }
-                          }}
-                          className="w-4 h-4 accent-[#F5C400]"
-                        />
-                        <span className="text-sm text-white">{ex}</span>
-                      </label>
-                    ))}
-                  </div>
+                <div className="max-h-48 overflow-y-auto flex flex-col gap-2">
+                  <p className="text-xs text-[#888888] mb-1 uppercase tracking-wide">Exercices</p>
+                  {activeProfile.exercise_list.map((ex) => (
+                    <label key={ex} className="flex items-center gap-3 bg-[#1C1C1C] rounded-xl px-4 py-3 border border-[#2A2A2A] cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={exercisesDone.includes(ex)}
+                        onChange={(e) => {
+                          if (e.target.checked) setExercisesDone([...exercisesDone, ex]);
+                          else setExercisesDone(exercisesDone.filter((e2) => e2 !== ex));
+                        }}
+                        className="w-4 h-4 accent-[#F5C400]"
+                      />
+                      <span className="text-sm text-white">{ex}</span>
+                    </label>
+                  ))}
                 </div>
               )}
 
-              {/* Note */}
-              <div>
-                <label className="text-xs text-[#888888] mb-2 block uppercase tracking-wide">Note (optionnel)</label>
+              {/* Note — collapsed by default */}
+              <details className="group">
+                <summary className="text-xs text-[#555] cursor-pointer list-none flex items-center gap-1">
+                  <span className="group-open:hidden">＋ Ajouter une note</span>
+                  <span className="hidden group-open:block">− Note</span>
+                </summary>
                 <textarea
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="Ressenti, PR, observations..."
                   rows={2}
-                  className="w-full bg-[#1C1C1C] border border-[#2A2A2A] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#555] focus:border-[#F5C400] outline-none resize-none"
+                  className="w-full mt-2 bg-[#1C1C1C] border border-[#2A2A2A] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#555] focus:border-[#F5C400] outline-none resize-none"
                 />
-              </div>
-
+              </details>
             </div>
-            <div className="p-5 pt-3 border-t border-[#2A2A2A]" style={{ paddingBottom: "max(env(safe-area-inset-bottom) + 20px, 28px)" }}>
+
+            <div className="px-5 pt-2 border-t border-[#2A2A2A]" style={{ paddingBottom: "max(env(safe-area-inset-bottom) + 16px, 24px)" }}>
               {submitError && (
                 <p className="text-red-400 text-sm text-center mb-3 bg-red-400/10 rounded-xl px-3 py-2">{submitError}</p>
               )}
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="w-full bg-[#F5C400] text-black font-bold py-4 rounded-xl min-h-[52px] disabled:opacity-40"
+                className="w-full bg-[#F5C400] text-black font-bold py-4 rounded-xl min-h-[52px] disabled:opacity-40 text-base"
               >
-                {loading ? "Enregistrement..." : "Enregistrer la séance"}
+                {loading ? "Enregistrement..." : `✓ Séance ${category} · ${duration} min`}
               </button>
             </div>
           </div>
