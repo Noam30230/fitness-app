@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
     profile_id: item.profile_id,
     date: item.date,
     meal_name: item.meal_name,
+    meal_type: item.meal_type ?? "déjeuner",
     calories: item.calories,
     protein: item.protein,
     carbs: item.carbs,

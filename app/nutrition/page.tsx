@@ -29,7 +29,7 @@ import MacroBars from "@/components/MacroBar";
 import BarcodeScanner from "@/components/BarcodeScanner";
 import NaturalLanguageLog from "@/components/NaturalLanguageLog";
 import { calculateDailyTarget } from "@/lib/nutrition";
-import type { NutritionLog, SavedMeal } from "@/lib/types";
+import type { NutritionLog, SavedMeal, MealType } from "@/lib/types";
 
 type AddMode = "scan" | "natural" | "saved";
 
@@ -42,6 +42,7 @@ export default function NutritionPage() {
   const [savedMeals, setSavedMeals] = useState<SavedMeal[]>([]);
   const [loading, setLoading] = useState(false);
   const [addError, setAddError] = useState("");
+  const [mealType, setMealType] = useState<MealType>("déjeuner");
 
   const today = format(new Date(), "yyyy-MM-dd");
 
@@ -106,6 +107,7 @@ export default function NutritionPage() {
     quantity_g?: number;
     source: "barcode" | "natural" | "saved";
     is_approximate?: boolean;
+    meal_type?: MealType;
   }[]) => {
     if (!activeProfile) return;
     setLoading(true);
@@ -113,6 +115,7 @@ export default function NutritionPage() {
     try {
       const payloads = items.map((item) => ({
         ...item,
+        meal_type: item.meal_type ?? mealType,
         profile_id: activeProfile.id,
         date: today,
       }));
@@ -187,35 +190,49 @@ export default function NutritionPage() {
           </div>
         </div>
 
-        {/* Today's meals */}
+        {/* Today's meals grouped by meal type */}
         <div className="bg-[#141414] rounded-card border border-[#2A2A2A] p-4">
           <h3 className="text-sm font-semibold text-white mb-3">Repas du jour</h3>
           {todayLogs.length === 0 ? (
             <p className="text-[#888888] text-sm text-center py-4">Aucun repas enregistré aujourd&apos;hui</p>
           ) : (
-            <div className="flex flex-col gap-2">
-              {todayLogs.map((log) => (
-                <div key={log.id} className="flex items-center justify-between bg-[#1C1C1C] rounded-xl p-3 border border-[#2A2A2A]">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-semibold text-white truncate">{log.meal_name}</span>
-                      {log.is_approximate && (
-                        <span className="text-[9px] bg-[#F5C400]/20 text-[#F5C400] px-1.5 py-0.5 rounded-full flex-shrink-0">~</span>
-                      )}
+            <div className="flex flex-col gap-4">
+              {(["petit-déjeuner", "déjeuner", "dîner", "collation"] as MealType[]).map((type) => {
+                const logsForType = todayLogs.filter((l) => (l.meal_type ?? "déjeuner") === type);
+                if (logsForType.length === 0) return null;
+                const typeCalories = logsForType.reduce((s, l) => s + l.calories, 0);
+                const emoji = type === "petit-déjeuner" ? "🌅" : type === "déjeuner" ? "☀️" : type === "dîner" ? "🌙" : "🍎";
+                const label = type === "petit-déjeuner" ? "Petit-déjeuner" : type.charAt(0).toUpperCase() + type.slice(1);
+                return (
+                  <div key={type}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold text-[#888888] uppercase tracking-wide">{emoji} {label}</span>
+                      <span className="text-xs font-semibold text-[#F5C400]">{typeCalories} kcal</span>
                     </div>
-                    <div className="flex gap-2 mt-0.5">
-                      <span className="text-xs text-[#F5C400] font-semibold">{log.calories} kcal</span>
-                      <span className="text-xs text-[#888888]">P:{log.protein}g G:{log.carbs}g L:{log.fat}g</span>
+                    <div className="flex flex-col gap-2">
+                      {logsForType.map((log) => (
+                        <div key={log.id} className="flex items-center justify-between bg-[#1C1C1C] rounded-xl p-3 border border-[#2A2A2A]">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm font-semibold text-white truncate">{log.meal_name}</span>
+                              {log.is_approximate && (
+                                <span className="text-[9px] bg-[#F5C400]/20 text-[#F5C400] px-1.5 py-0.5 rounded-full flex-shrink-0">~</span>
+                              )}
+                            </div>
+                            <div className="flex gap-2 mt-0.5">
+                              <span className="text-xs text-[#F5C400] font-semibold">{log.calories} kcal</span>
+                              <span className="text-xs text-[#888888]">P:{log.protein}g G:{log.carbs}g L:{log.fat}g</span>
+                            </div>
+                          </div>
+                          <button onClick={() => handleDelete(log.id)} className="p-1.5 text-[#888888] hover:text-red-400 flex-shrink-0">
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleDelete(log.id)}
-                    className="p-1.5 text-[#888888] hover:text-red-400 flex-shrink-0"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -272,11 +289,26 @@ export default function NutritionPage() {
         <div className="fixed inset-0 z-[100] flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSheet(false)} />
           <div className="relative bg-[#141414] rounded-t-3xl border-t border-[#2A2A2A] slide-up max-h-[90vh] flex flex-col">
-            <div className="p-5 pb-0 flex items-center justify-between mb-5">
+            <div className="p-5 pb-0 flex items-center justify-between">
               <h2 className="text-lg font-bold text-white">Ajouter un repas</h2>
               <button onClick={() => setShowSheet(false)} className="text-[#888888]">
                 <X size={22} />
               </button>
+            </div>
+            {/* Meal type selector */}
+            <div className="flex gap-2 px-5 pt-3 pb-0">
+              {(["petit-déjeuner", "déjeuner", "dîner", "collation"] as MealType[]).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setMealType(t)}
+                  className={`flex-1 py-2 rounded-xl text-xs font-semibold capitalize transition-all ${
+                    mealType === t ? "bg-[#F5C400] text-black" : "bg-[#1C1C1C] text-[#888888] border border-[#2A2A2A]"
+                  }`}
+                >
+                  {t === "petit-déjeuner" ? "🌅" : t === "déjeuner" ? "☀️" : t === "dîner" ? "🌙" : "🍎"}
+                  <span className="block text-[10px] mt-0.5">{t === "petit-déjeuner" ? "Petit-déj" : t.charAt(0).toUpperCase() + t.slice(1)}</span>
+                </button>
+              ))}
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 pb-4">

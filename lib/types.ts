@@ -39,11 +39,14 @@ export interface WorkoutLog {
   created_at?: string;
 }
 
+export type MealType = "petit-déjeuner" | "déjeuner" | "dîner" | "collation";
+
 export interface NutritionLog {
   id: string;
   profile_id: string;
   date: string;
   meal_name: string;
+  meal_type: MealType;
   calories: number;
   protein: number;
   carbs: number;
