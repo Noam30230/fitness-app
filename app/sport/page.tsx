@@ -321,15 +321,15 @@ export default function SportPage() {
       {showSheet && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSheet(false)} />
-          <div className="relative bg-[#141414] rounded-t-3xl border-t border-[#2A2A2A] p-5 slide-up max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-5">
+          <div className="relative bg-[#141414] rounded-t-3xl border-t border-[#2A2A2A] slide-up max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-5 pb-0">
               <h2 className="text-lg font-bold text-white">Nouvelle séance</h2>
               <button onClick={() => setShowSheet(false)} className="text-[#888888]">
                 <X size={22} />
               </button>
             </div>
 
-            <div className="flex flex-col gap-4">
+            <div className="flex-1 overflow-y-auto p-5 pt-4 flex flex-col gap-4">
               {/* Date */}
               <div>
                 <label className="text-xs text-[#888888] mb-2 block uppercase tracking-wide">Date</label>
@@ -419,6 +419,8 @@ export default function SportPage() {
                 />
               </div>
 
+            </div>
+            <div className="p-5 pt-3 pb-8 border-t border-[#2A2A2A]">
               <button
                 onClick={handleSubmit}
                 disabled={loading}
