@@ -44,6 +44,7 @@ export default function SportPage() {
   const [workouts, setWorkouts] = useState<WorkoutLog[]>([]);
   const [showSheet, setShowSheet] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   // Form state
   const [date, setDate] = useState(format(new Date(), "yyyy-MM-dd"));
@@ -65,6 +66,7 @@ export default function SportPage() {
   const handleSubmit = async () => {
     if (!activeProfile) return;
     setLoading(true);
+    setSubmitError("");
     try {
       const payload = {
         profile_id: activeProfile.id,
@@ -85,7 +87,12 @@ export default function SportPage() {
         setShowSheet(false);
         setNote("");
         setExercisesDone([]);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setSubmitError(err.error ?? `Erreur serveur (${res.status})`);
       }
+    } catch (e) {
+      setSubmitError("Impossible de contacter le serveur. Vérifie ta connexion.");
     } finally {
       setLoading(false);
     }
@@ -421,6 +428,9 @@ export default function SportPage() {
 
             </div>
             <div className="p-5 pt-3 border-t border-[#2A2A2A]" style={{ paddingBottom: "max(env(safe-area-inset-bottom) + 20px, 28px)" }}>
+              {submitError && (
+                <p className="text-red-400 text-sm text-center mb-3 bg-red-400/10 rounded-xl px-3 py-2">{submitError}</p>
+              )}
               <button
                 onClick={handleSubmit}
                 disabled={loading}

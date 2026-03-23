@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Camera, Keyboard, Search, Loader2 } from "lucide-react";
 
 interface BarcodeResult {
@@ -22,66 +22,70 @@ export default function BarcodeScanner({ onResult }: BarcodeScannerProps) {
   const [product, setProduct] = useState<BarcodeResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const scannerRef = useRef<HTMLDivElement>(null);
-  const html5QrRef = useRef<unknown>(null);
+  const scannerRef = useRef<unknown>(null);
+  const hasScanned = useRef(false);
 
-  useEffect(() => {
-    if (mode === "camera" && typeof window !== "undefined") {
-      let scanner: { stop: () => Promise<void> } | null = null;
-
-      import("html5-qrcode").then(({ Html5Qrcode }) => {
-        const qr = new Html5Qrcode("barcode-reader");
-        html5QrRef.current = qr;
-        scanner = qr as unknown as { stop: () => Promise<void> };
-        qr.start(
-          { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 250, height: 250 } },
-          (decodedText: string) => {
-            handleBarcode(decodedText);
-            qr.stop().catch(() => {});
-          },
-          undefined
-        ).catch(() => {
-          setMode("manual");
-        });
-      }).catch(() => {
-        setMode("manual");
-      });
-
-      return () => {
-        if (scanner) {
-          scanner.stop().catch(() => {});
-        }
-      };
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode]);
-
-  const handleBarcode = async (code: string) => {
+  const handleBarcode = useCallback(async (code: string) => {
     setLoading(true);
     setError("");
     try {
       const res = await fetch(`/api/barcode?barcode=${encodeURIComponent(code)}`);
-      if (!res.ok) throw new Error("Produit non trouvé");
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Produit non trouvé");
       setProduct(data);
-    } catch {
-      setError("Produit non trouvé. Essayez un autre code.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Produit non trouvé. Essayez un autre code.");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (mode !== "camera" || typeof window === "undefined") return;
+
+    hasScanned.current = false;
+    let stopped = false;
+
+    import("html5-qrcode").then(({ Html5Qrcode }) => {
+      if (stopped) return;
+      const qr = new Html5Qrcode("barcode-reader");
+      scannerRef.current = qr;
+
+      qr.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText: string) => {
+          if (hasScanned.current) return;
+          hasScanned.current = true;
+          qr.stop().catch(() => {}).finally(() => {
+            handleBarcode(decodedText);
+          });
+        },
+        undefined
+      ).catch(() => {
+        setMode("manual");
+        setError("Caméra non disponible, utilisez la saisie manuelle.");
+      });
+    }).catch(() => {
+      setMode("manual");
+    });
+
+    return () => {
+      stopped = true;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const qr = scannerRef.current as any;
+      if (qr?.isScanning) {
+        qr.stop().catch(() => {});
+      }
+    };
+  }, [mode, handleBarcode]);
 
   const handleManualSearch = () => {
-    if (manualCode.trim()) {
-      handleBarcode(manualCode.trim());
-    }
+    if (manualCode.trim()) handleBarcode(manualCode.trim());
   };
 
   const handleConfirm = () => {
-    if (product) {
-      onResult(product, quantity);
-    }
+    if (product) onResult(product, quantity);
   };
 
   return (
@@ -89,7 +93,7 @@ export default function BarcodeScanner({ onResult }: BarcodeScannerProps) {
       {/* Mode toggle */}
       <div className="flex gap-2">
         <button
-          onClick={() => { setMode("camera"); setProduct(null); setError(""); }}
+          onClick={() => { setMode("camera"); setProduct(null); setError(""); hasScanned.current = false; }}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${
             mode === "camera" ? "bg-[#F5C400] text-black" : "bg-[#1C1C1C] text-[#888888] border border-[#2A2A2A]"
           }`}
@@ -106,10 +110,9 @@ export default function BarcodeScanner({ onResult }: BarcodeScannerProps) {
         </button>
       </div>
 
-      {mode === "camera" && !product && (
+      {mode === "camera" && !product && !loading && (
         <div
           id="barcode-reader"
-          ref={scannerRef}
           className="w-full rounded-xl overflow-hidden bg-[#1C1C1C] min-h-[250px]"
         />
       )}
@@ -124,23 +127,31 @@ export default function BarcodeScanner({ onResult }: BarcodeScannerProps) {
             placeholder="Code-barres (ex: 3017620422003)"
             className="flex-1 bg-[#1C1C1C] border border-[#2A2A2A] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#555] focus:border-[#F5C400] outline-none"
           />
-          <button
-            onClick={handleManualSearch}
-            className="bg-[#F5C400] text-black p-3 rounded-xl"
-          >
+          <button onClick={handleManualSearch} className="bg-[#F5C400] text-black p-3 rounded-xl">
             <Search size={18} />
           </button>
         </div>
       )}
 
       {loading && (
-        <div className="flex items-center justify-center py-6">
+        <div className="flex flex-col items-center justify-center py-6 gap-2">
           <Loader2 size={24} className="text-[#F5C400] animate-spin" />
+          <span className="text-xs text-[#888888]">Recherche du produit...</span>
         </div>
       )}
 
       {error && (
-        <p className="text-red-400 text-sm text-center">{error}</p>
+        <div className="bg-red-400/10 border border-red-400/30 rounded-xl px-4 py-3">
+          <p className="text-red-400 text-sm text-center">{error}</p>
+          {mode === "camera" && (
+            <button
+              onClick={() => { setError(""); hasScanned.current = false; setMode("manual"); }}
+              className="w-full mt-2 text-xs text-[#888888] underline"
+            >
+              Saisir le code manuellement
+            </button>
+          )}
+        </div>
       )}
 
       {product && (
@@ -182,10 +193,7 @@ export default function BarcodeScanner({ onResult }: BarcodeScannerProps) {
             )}
           </div>
 
-          <button
-            onClick={handleConfirm}
-            className="w-full bg-[#F5C400] text-black font-bold py-3.5 rounded-xl min-h-[52px]"
-          >
+          <button onClick={handleConfirm} className="w-full bg-[#F5C400] text-black font-bold py-3.5 rounded-xl min-h-[52px]">
             Ajouter ce repas
           </button>
         </div>
