@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useProfile } from "@/components/ProfileContext";
-import { calculateBMR, calculateTDEE, calculateDailyTarget } from "@/lib/nutrition";
+import { calculateDailyTarget } from "@/lib/nutrition";
+
+const GOAL_ADJUSTMENTS: Record<string, number> = {
+  maintain: 0,
+  cut: -400,
+  bulk: 300,
+};
 import type { Profile, Gender, ActivityLevel, Goal, WorkoutMode } from "@/lib/types";
 import { Dumbbell } from "lucide-react";
 
@@ -30,8 +36,6 @@ export default function OnboardingPage() {
   const { refreshProfiles } = useProfile();
 
   const mockProfile = form as unknown as Profile;
-  const bmr = calculateBMR(mockProfile);
-  const tdee = calculateTDEE(mockProfile);
   const target = calculateDailyTarget(mockProfile);
 
   const handleSubmit = async () => {
@@ -165,7 +169,7 @@ export default function OnboardingPage() {
             ).map(({ v, l }) => (
               <button
                 key={v}
-                onClick={() => setForm({ ...form, goal: v })}
+                onClick={() => setForm({ ...form, goal: v, calorie_adjustment: GOAL_ADJUSTMENTS[v] })}
                 className={`py-3 rounded-xl text-xs font-semibold transition-all ${
                   form.goal === v ? "bg-[#F5C400] text-black" : "bg-[#1C1C1C] text-[#888888] border border-[#2A2A2A]"
                 }`}
@@ -176,21 +180,6 @@ export default function OnboardingPage() {
           </div>
         </Section>
 
-        {/* Calorie adjustment */}
-        <Section title="Ajustement calorique">
-          <div className="flex items-center gap-3">
-            <input
-              type="number"
-              value={form.calorie_adjustment}
-              onChange={(e) => setForm({ ...form, calorie_adjustment: Number(e.target.value) })}
-              className="flex-1 bg-[#1C1C1C] border border-[#2A2A2A] rounded-xl px-4 py-3 text-white text-center focus:border-[#F5C400] outline-none"
-            />
-            <span className="text-[#888888] text-sm">kcal/jour</span>
-          </div>
-          <p className="text-xs text-[#555] mt-1">
-            Ex: -400 pour sèche, +300 pour prise de masse, 0 pour maintien
-          </p>
-        </Section>
 
         {/* Workout mode */}
         <Section title="Mode d'entraînement">
@@ -255,22 +244,9 @@ export default function OnboardingPage() {
         )}
 
         {/* Calories preview */}
-        <div className="bg-[#141414] rounded-xl p-4 border border-[#2A2A2A]">
-          <h3 className="text-sm font-semibold text-[#888888] mb-3">Calculs nutritionnels</h3>
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div>
-              <div className="text-lg font-bold text-white">{Math.round(bmr)}</div>
-              <div className="text-xs text-[#888888]">BMR kcal</div>
-            </div>
-            <div>
-              <div className="text-lg font-bold text-white">{Math.round(tdee)}</div>
-              <div className="text-xs text-[#888888]">TDEE kcal</div>
-            </div>
-            <div>
-              <div className="text-lg font-bold text-[#F5C400]">{Math.round(target)}</div>
-              <div className="text-xs text-[#888888]">Objectif kcal</div>
-            </div>
-          </div>
+        <div className="bg-[#141414] rounded-xl p-4 border border-[#2A2A2A] flex items-center justify-between">
+          <span className="text-sm text-[#888888]">Objectif journalier estimé</span>
+          <span className="text-xl font-bold text-[#F5C400]">{Math.round(target)} kcal</span>
         </div>
 
         <button

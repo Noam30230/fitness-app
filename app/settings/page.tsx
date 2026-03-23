@@ -3,7 +3,13 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useProfile } from "@/components/ProfileContext";
-import { calculateBMR, calculateTDEE, calculateDailyTarget } from "@/lib/nutrition";
+import { calculateDailyTarget } from "@/lib/nutrition";
+
+const GOAL_ADJUSTMENTS: Record<string, number> = {
+  maintain: 0,
+  cut: -400,
+  bulk: 300,
+};
 import type { Profile, Gender, ActivityLevel, Goal, WorkoutMode } from "@/lib/types";
 import { Save, Plus, Trash2, UserPlus, ChevronDown, ChevronUp } from "lucide-react";
 
@@ -25,8 +31,6 @@ export default function SettingsPage() {
   if (!activeProfile || !form.name) return null;
 
   const mockProfile = form as Profile;
-  const bmr = calculateBMR(mockProfile);
-  const tdee = calculateTDEE(mockProfile);
   const target = calculateDailyTarget(mockProfile);
 
   const handleSave = async () => {
@@ -70,14 +74,10 @@ export default function SettingsPage() {
       </div>
 
       <div className="px-4 flex flex-col gap-4 max-w-lg mx-auto">
-        {/* Live macros */}
-        <div className="bg-[#141414] rounded-card border border-[#2A2A2A] p-4">
-          <h3 className="text-sm font-semibold text-[#888888] mb-3 uppercase tracking-wide">Calculs en temps réel</h3>
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <CalcCard label="BMR" value={Math.round(bmr)} unit="kcal" />
-            <CalcCard label="TDEE" value={Math.round(tdee)} unit="kcal" />
-            <CalcCard label="Objectif" value={Math.round(target)} unit="kcal" highlight />
-          </div>
+        {/* Live target */}
+        <div className="bg-[#141414] rounded-card border border-[#2A2A2A] p-4 flex items-center justify-between">
+          <span className="text-sm text-[#888888]">Objectif journalier</span>
+          <span className="text-xl font-bold text-[#F5C400]">{Math.round(target)} kcal</span>
         </div>
 
         {/* Identity */}
@@ -155,23 +155,11 @@ export default function SettingsPage() {
               { v: "cut" as Goal, l: "Sèche" },
               { v: "bulk" as Goal, l: "Prise de masse" },
             ]).map(({ v, l }) => (
-              <button key={v} onClick={() => F("goal", v)}
+              <button key={v} onClick={() => { F("goal", v); F("calorie_adjustment", GOAL_ADJUSTMENTS[v]); }}
                 className={`py-3 rounded-xl text-xs font-semibold transition-all ${form.goal === v ? "bg-[#F5C400] text-black" : "bg-[#1C1C1C] text-[#888888] border border-[#2A2A2A]"}`}>
                 {l}
               </button>
             ))}
-          </div>
-          <div>
-            <label className="text-xs text-[#888888] mb-1 block">Ajustement calorique</label>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                value={form.calorie_adjustment ?? 0}
-                onChange={(e) => F("calorie_adjustment", Number(e.target.value))}
-                className="flex-1 bg-[#1C1C1C] border border-[#2A2A2A] rounded-xl px-4 py-3 text-white text-center focus:border-[#F5C400] outline-none"
-              />
-              <span className="text-[#888888] text-sm">kcal</span>
-            </div>
           </div>
         </Section>
 
@@ -294,12 +282,3 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function CalcCard({ label, value, unit, highlight = false }: { label: string; value: number; unit: string; highlight?: boolean }) {
-  return (
-    <div className="bg-[#1C1C1C] rounded-xl p-3 border border-[#2A2A2A] text-center">
-      <div className={`text-lg font-bold ${highlight ? "text-[#F5C400]" : "text-white"}`}>{value}</div>
-      <div className="text-xs text-[#888888]">{unit}</div>
-      <div className="text-[10px] text-[#555] mt-0.5">{label}</div>
-    </div>
-  );
-}
