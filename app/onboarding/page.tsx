@@ -117,16 +117,13 @@ export default function OnboardingPage() {
               ] as { key: "age" | "weight" | "height"; label: string; unit: string }[]
             ).map(({ key, label, unit }) => (
               <div key={key}>
-                <label className="text-xs text-[#888888] mb-1 block">{label}</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={form[key]}
-                    onChange={(e) => setForm({ ...form, [key]: Number(e.target.value) })}
-                    className="w-full bg-[#1C1C1C] border border-[#2A2A2A] rounded-xl px-3 py-3 text-white text-center focus:border-[#F5C400] outline-none"
-                  />
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[#555] text-xs">{unit}</span>
-                </div>
+                <label className="text-xs text-[#888888] mb-1 block">{label} <span className="text-[#555]">({unit})</span></label>
+                <input
+                  type="number"
+                  value={form[key]}
+                  onChange={(e) => setForm({ ...form, [key]: Number(e.target.value) })}
+                  className="w-full bg-[#1C1C1C] border border-[#2A2A2A] rounded-xl px-3 py-3 text-white text-center focus:border-[#F5C400] outline-none"
+                />
               </div>
             ))}
           </div>
